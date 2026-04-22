@@ -26,7 +26,7 @@ graph LR
     end
 
     subgraph Saida [Saida]
-        E -- "Link da Playlist" --> F[WhatsApp]
+        E -- "Link da Playlist" --> F[E-mail]
         F --> G{Usuário Final}
     end
 
