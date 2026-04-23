@@ -1,0 +1,265 @@
+{
+  "name": "workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Playlist do Momento",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nome",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "E-mail",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Humor",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Feliz"
+                  },
+                  {
+                    "option": "Triste"
+                  },
+                  {
+                    "option": "Com energia"
+                  },
+                  {
+                    "option": "Cansado"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Localização",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7cc55acc-5eb3-4995-8cc7-1728cb79b2ff",
+      "name": "On form submission",
+      "webhookId": "185bac91-b79e-49cd-a89c-3b01c4f8b5cb"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae0e3221-bdaf-4b7c-a921-28e72f563242",
+              "leftValue": "={{ $json.current_weather.temperature }}",
+              "rightValue": 25,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "f374ac8a-59a4-4dc4-881a-fbceeb403516",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json['Localização'] }}"
+            },
+            {
+              "name": "count",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "68bc09dc-22cb-4147-a370-3ab34d9a2a1c",
+      "name": "Buscar Coordenadas (Geocoding)"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ $json.results[0].latitude }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ $json.results[0].longitude }}"
+            },
+            {
+              "name": "current_weather",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "fc6cd39a-228e-4648-a1e6-07e63dfa5027",
+      "name": "Consultar Previsão do Tempo"
+    },
+    {
+      "parameters": {
+        "fromEmail": "playlistdomomento2026@gmail.com",
+        "toEmail": "={{ $('On form submission').item.json['E-mail'] }}",
+        "subject": "=Sugestão de playlist para o calor de {{ $node[\"On form submission\"].json[\"Localização\"] }}",
+        "emailFormat": "text",
+        "text": "=Olá {{ $node[\"On form submission\"].json[\"Nome\"] }}, como está um solzão de {{ $node[\"Consultar Previsão do Tempo\"].json.current_weather.temperature }}°C, aqui está uma playlist quente para combinar com o seu humor {{ $node[\"On form submission\"].json[\"Humor\"] }}: [Link de uma playlist animada]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        -144
+      ],
+      "id": "439a573e-5bf3-4679-950c-4dfca0eb647c",
+      "name": "Enviar email para clima maior que 25 °C",
+      "webhookId": "58cf6d94-abd9-4c99-88b6-37493f6a1369",
+      "credentials": {
+        "smtp": {
+          "id": "U8qLUkUw37y2Gupa",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "playlistdomomento2026@gmail.com",
+        "toEmail": "={{ $('On form submission').item.json['E-mail'] }}",
+        "subject": "=Oi {{ $node[\"On form submission\"].json[\"Nome\"] }}, o clima está fresquinho {{ $node[\"Consultar Previsão do Tempo\"].json.current_weather.temperature }}°C. Que tal este som para relaxar já que você está se sentindo {{ $node[\"On form submission\"].json[\"Humor\"] }}? [Link da playlist]",
+        "emailFormat": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        96
+      ],
+      "id": "059c7659-4bd5-4cc6-b2a4-9225a49f19cd",
+      "name": "Enviar email para clima menor ou igual a 25 °C",
+      "webhookId": "e1ac74b7-a8e2-476e-a84e-7f0577a60462",
+      "credentials": {
+        "smtp": {
+          "id": "U8qLUkUw37y2Gupa",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Buscar Coordenadas (Geocoding)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Enviar email para clima maior que 25 °C",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar email para clima menor ou igual a 25 °C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Coordenadas (Geocoding)": {
+      "main": [
+        [
+          {
+            "node": "Consultar Previsão do Tempo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Previsão do Tempo": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "db7cc2dc-f207-4f75-9529-273d3c5280ca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0b9365cfaf31821afeb6087cd1ffb01b3d9253ae9a47727892b369487c73fb66"
+  },
+  "id": "DmtnHZGqiDytVatk",
+  "tags": []
+}
